@@ -1,7 +1,8 @@
 const BOOKING_URL = 'https://metshein.com/kordamine/json/broneeringud.json';
 const tableBody = document.querySelector('#bookingTable tbody');
-const filterSelect = document.querySelector('#serviceFilter');
 const statsEl = document.querySelector('#stats');
+const serviceGrid = document.querySelector('#serviceGrid');
+let selectedService = 'all';
 
 const SERVICE_CLASS_MAP = {
   Juuksur: 'service-juuksur',
@@ -32,25 +33,71 @@ function formatDate(dateString = '') {
   }).format(date);
 }
 
-function buildServiceOptions(bookings) {
-  const uniqueServices = [...new Set(bookings.map((booking) => cleanText(booking.teenus)))];
+function getBookingTimestamp(booking) {
+  const date = cleanText(booking['kuupäev']);
+  const isoDate = date.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const localDate = date.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  let year;
+  let month;
+  let day;
+
+  if (isoDate) {
+    [, year, month, day] = isoDate;
+  } else if (localDate) {
+    [, day, month, year] = localDate;
+  } else {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const time = cleanText(booking.aeg).match(/^(\d{1,2}):(\d{2})/);
+  const hours = time ? Number(time[1]) : 0;
+  const minutes = time ? Number(time[2]) : 0;
+  return new Date(Number(year), Number(month) - 1, Number(day), hours, minutes).getTime();
+}
+
+function buildServiceCards(bookings) {
+  const uniqueServices = [...new Set(bookings.map((booking) => cleanText(booking.teenus)).filter(Boolean))];
   uniqueServices.sort((a, b) => a.localeCompare(b, 'et'));
 
-  filterSelect.innerHTML = '<option value="all">Kõik teenused</option>';
+  const cards = [
+    { service: 'all', label: 'Kõik broneeringud', count: bookings.length },
+    ...uniqueServices.map((service) => ({
+      service,
+      label: service,
+      count: bookings.filter((booking) => cleanText(booking.teenus) === service).length,
+    })),
+  ];
 
-  uniqueServices.forEach((service) => {
-    const option = document.createElement('option');
-    option.value = service;
-    option.textContent = service;
-    filterSelect.appendChild(option);
+  serviceGrid.replaceChildren();
+  cards.forEach(({ service, label, count }) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `service-card ${SERVICE_CLASS_MAP[label] || ''}`.trim();
+    card.dataset.service = service;
+    card.setAttribute('aria-pressed', String(service === selectedService));
+
+    const title = document.createElement('span');
+    title.className = 'service-card-title';
+    title.textContent = label;
+
+    const amount = document.createElement('strong');
+    amount.className = 'service-card-count';
+    amount.textContent = String(count);
+
+    const caption = document.createElement('span');
+    caption.className = 'service-card-caption';
+    caption.textContent = count === 1 ? 'broneering' : 'broneeringut';
+
+    card.append(title, amount, caption);
+    serviceGrid.appendChild(card);
   });
 }
 
 function renderRows(bookings) {
-  const selectedService = filterSelect.value || 'all';
-  const visibleRows = selectedService === 'all'
+  const filteredRows = selectedService === 'all'
     ? bookings
     : bookings.filter((booking) => cleanText(booking.teenus) === selectedService);
+  const visibleRows = [...filteredRows].sort((a, b) => getBookingTimestamp(a) - getBookingTimestamp(b));
 
   if (!visibleRows.length) {
     tableBody.innerHTML = `
@@ -81,7 +128,7 @@ function renderRows(bookings) {
     })
     .join('');
 
-  statsEl.textContent = `Näitan ${visibleRows.length} broneeringut${visibleRows.length === 1 ? '' : 'ut'}.`;
+  statsEl.textContent = `Näitan ${visibleRows.length} broneeringut.`;
 }
 
 function loadBookings() {
@@ -97,7 +144,7 @@ function loadBookings() {
       const bookings = Array.isArray(data) ? data : data.broneeringud || [];
       bookingDataStore.length = 0;
       bookings.forEach((booking) => bookingDataStore.push(booking));
-      buildServiceOptions(bookings);
+      buildServiceCards(bookings);
       renderRows(bookings);
     })
     .catch((error) => {
@@ -111,7 +158,14 @@ function loadBookings() {
     });
 }
 
-filterSelect.addEventListener('change', () => {
+serviceGrid.addEventListener('click', (event) => {
+  const card = event.target.closest('.service-card');
+  if (!card) return;
+
+  selectedService = card.dataset.service;
+  serviceGrid.querySelectorAll('.service-card').forEach((serviceCard) => {
+    serviceCard.setAttribute('aria-pressed', String(serviceCard === card));
+  });
   renderRows(bookingDataStore);
 });
 

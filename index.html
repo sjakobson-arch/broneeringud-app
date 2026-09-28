@@ -14,15 +14,17 @@
           <h1>Teenuste ajakava</h1>
         </div>
 
-        <label class="filter-wrap" for="serviceFilter">
-          <span>Filtreeri teenuse järgi</span>
-          <select id="serviceFilter" aria-label="Filtreeri teenuse järgi">
-            <option value="all">Kõik teenused</option>
-          </select>
-        </label>
       </header>
 
       <main>
+        <section class="service-picker" aria-labelledby="serviceHeading">
+          <div class="section-heading">
+            <h2 id="serviceHeading">Broneeringute tüübid</h2>
+            <p>Vali teenus, et näha selle aegu</p>
+          </div>
+          <div class="service-grid" id="serviceGrid" aria-label="Broneeringute tüübid"></div>
+        </section>
+
         <div class="stats" id="stats">Laen broneeringuid...</div>
 
         <div class="table-wrap">
