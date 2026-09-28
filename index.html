@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="et">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Broneeringud</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Broneeringud</p>
+          <h1>Teenuste ajakava</h1>
+        </div>
+
+        <label class="filter-wrap" for="serviceFilter">
+          <span>Filtreeri teenuse järgi</span>
+          <select id="serviceFilter" aria-label="Filtreeri teenuse järgi">
+            <option value="all">Kõik teenused</option>
+          </select>
+        </label>
+      </header>
+
+      <main>
+        <div class="stats" id="stats">Laen broneeringuid...</div>
+
+        <div class="table-wrap">
+          <table id="bookingTable">
+            <thead>
+              <tr>
+                <th>Klient</th>
+                <th>Teenus</th>
+                <th>Kuupäev</th>
+                <th>Kellaaeg</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
